@@ -31,8 +31,8 @@ export SHARE_DIR="/opt/docker_data/SQUID3" && mkdir -p $SHARE_DIR
 Определяем адрес на котором будет запущен прокси сервер и запускаем
 ```shell
 export ip_addr=<ip адрес>
-docker run -d --name squid3 --restart=always   -p $ip_add:4128:3128 \
--p $ip_add:4129:80 \
+docker run -d --name squid3 --restart=always   -p $ip_add:3128:3128 \
+-p $ip_add:3129:80 \
 -h squid3.lira.local \
 --volume $SHARE_DIR:/var/spool/squid3 \
 ershov/debian8_squid3_kerberos
