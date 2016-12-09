@@ -1,0 +1,19 @@
+#
+#Logrotate fragnment for squid.
+#
+/var/spool/squid3/logs/*.log {
+  daily
+  compress
+  delaycompress
+  rotate 2
+  missingok
+  nocreate
+  sharedscripts
+  prerotate
+    test ! -x /usr/sbin/sarg-reports || /usr/sbin/sarg-reports monthly
+  endscript
+  postrotate
+    test ! -e /var/run/squid3.pid || /usr/sbin/squid3 -f /etc/squid3/squid.conf -k rotate
+
+  endscript
+}

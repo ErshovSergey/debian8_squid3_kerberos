@@ -1,0 +1,89 @@
+if [ ! -f $SQUID_DIR/credetinals ]; then
+  echo "Not found 'credetinals'"
+  echo "!!  Need create !!"
+  exit 1
+fi
+
+. $SQUID_DIR/credetinals
+
+# необходимые переменные
+DOMAIN_NAME_UPPERCASE=${domain_name^^}
+domain_name_domain_lowercase=${domain_name,,}
+PROXY_SERVER_NAME_uppercase=${proxy_server_name^^}
+proxy_server_name_lowercase=${proxy_server_name,,}
+etc_keytab=/var/spool/squid3/krb5.keytab
+
+
+# добавляем в /etc/hosts строки
+# $ip	$hostname
+add_to_etc_hotsts () {
+  ip=$1
+  hostname=$2
+  tmp_file=/tmp/etc_hotsts.tmp
+
+  # копируем 
+  cp /etc/hosts ${tmp_file}
+
+  # удаляем строки содежащие hostname
+  sed -i -e "/[\t]${hostname}/d" ${tmp_file}
+  sed -i -e "/ ${hostname}/d"    ${tmp_file}
+
+  # добавляем запись
+  echo "${ip}	${hostname}" >> ${tmp_file}
+
+  # копируем обратно
+  cp ${tmp_file} /etc/hosts
+}
+
+# добавляем записи
+add_ns_fileds() {
+  # добавляем строку "fqdn domain controller" в /etc/hosts
+  add_to_etc_hotsts $ipaddr_domain_controller $fqdn_domain_controller
+
+  # добавляем строку "fqdn proxy server" в /etc/hosts
+  add_to_etc_hotsts "`hostname -I`" "$proxy_server_name_lowercase.$domain_name_domain_lowercase"
+
+  # добавляем строку domain_name_domain_lowercase fqdn_domain_controller
+  add_to_etc_hotsts $ipaddr_domain_controller $domain_name_domain_lowercase
+
+  # добавляем dns сервер домена
+  echo "search $domain_name_domain_lowercase" >  /etc/resolv.conf
+  echo "nameserver $ipaddr_dns_server_domain" >> /etc/resolv.conf
+
+}
+
+# пишем /etc/krb5.conf
+write_etc_krb5_conf() {
+  { \
+  echo "[libdefaults]"; \
+  echo "  # имя домена вводить БОЛЬШИМИ БУКВАМИ"; \
+  echo "  default_realm = $DOMAIN_NAME_UPPERCASE"; \
+  echo "  dns_lookup_kdc = yes"; \
+  echo "  dns_lookup_realm = yes"; \
+  echo "  ticket_lifetime = 24h"; \
+  echo "  default_keytab_name = $etc_keytab"; \
+  echo ""; \
+  echo "#; For Windows XP:"; \
+  echo "# default_tgs_enctypes = rc4-hmac des-cbc-crc des-cbc-md5"; \
+  echo "# default_tkt_enctypes = rc4-hmac des-cbc-crc des-cbc-md5"; \
+  echo "# permitted_enctypes = rc4-hmac des-cbc-crc des-cbc-md5"; \
+  echo "  ; for Windows 2008 with AES"; \
+  echo "  default_tgs_enctypes = aes256-cts-hmac-sha1-96 rc4-hmac des-cbc-crc des-cbc-md5"; \
+  echo "  default_tkt_enctypes = aes256-cts-hmac-sha1-96 rc4-hmac des-cbc-crc des-cbc-md5"; \
+  echo "  permitted_enctypes = aes256-cts-hmac-sha1-96 rc4-hmac des-cbc-crc des-cbc-md5"; \
+  echo ""; \
+  echo "[realms]"; \
+  echo "  # имя домена вводить БОЛЬШИМИ БУКВАМИ"; \
+  echo "  $DOMAIN_NAME_UPPERCASE = {"; \
+  echo "    kdc = $fqdn_domain_controller"; \
+  echo "    admin_server = $fqdn_domain_controller"; \
+  echo "    default_domain = $domain_name"; \
+  echo "  }"; \
+  echo ""; \
+  echo "[domain_realm]"; \
+  echo "  .$domain_name = $DOMAIN_NAME_UPPERCASE"; \
+  echo "  $domain_name = $DOMAIN_NAME_UPPERCASE"; \
+  } > /etc/krb5.conf
+}
+
+

@@ -1,0 +1,8 @@
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+#/usr/sbin/sarg-reports monthly
+
+# start sarg
+59 * * * *  root export LANG=ru_RU.UTF-8 && /usr/bin/sarg -xd day-0
+00 00 * * * root export LANG=ru_RU.UTF-8 && /usr/sbin/sarg-reports daily
+30 02 1 * * root export LANG=ru_RU.UTF-8 && /usr/sbin/sarg-reports monthly
+#0 0 * * 1   root /usr/sbin/squid3 -k rotate

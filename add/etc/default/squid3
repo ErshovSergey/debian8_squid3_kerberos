@@ -1,0 +1,4 @@
+KRB5_KTNAME=/var/spool/squid3/krb5.keytab
+export KRB5_KTNAME
+KRB5RCACHETYPE=none
+export KRB5RCACHETYPE
