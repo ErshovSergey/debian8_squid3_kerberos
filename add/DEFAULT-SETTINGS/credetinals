@@ -15,7 +15,7 @@ ipaddr_domain_controller=192.168.0.9
 domain_name=lira.local
 
 # имя под которым будет добавлен в домен прокси сервер
-proxy_server_name=squidproxy
+proxy_server_name=squid3
 
 # ip адрес dns сервера домена AD
 ipaddr_dns_server_domain=192.168.0.9
